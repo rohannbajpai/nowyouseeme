@@ -3,12 +3,14 @@ import { auth } from "@/auth"
 import { NextRequest, NextResponse } from "next/server";
 
 // Define a generic type for the context (params)
-type RouteContext = { params: { [key: string]: string | string[] } };
+// Define a generic type for the context (params)
+// In Next.js 15, params is a Promise. We support both for compatibility or strictness.
+type RouteContext = { params: Promise<{ [key: string]: string | string[] }> };
 
 // The handler now receives: Request, Context, and UserId
 type AuthenticatedHandler = (
     req: NextRequest,
-    context: RouteContext, // 👈 Pass this through
+    context: { params: { [key: string]: string | string[] } }, // Handler gets resolved params
     userId: string         // 👈 Inject this
 ) => Promise<NextResponse>;
 
@@ -23,7 +25,10 @@ export function authWrapper(handler: AuthenticatedHandler) {
 
         const userId = session.user.id;
 
+        // Resolve params before passing to handler
+        const params = await context.params;
+
         // 2. Call the handler with ALL arguments
-        return handler(req, context, userId);
+        return handler(req, { params }, userId);
     };
 }
