@@ -161,14 +161,14 @@ export function Dashboard({ user }: DashboardProps) {
                                     incomingCalls.map((call) => (
                                         <div
                                             key={call.callId}
-                                            className="group flex w-full items-center justify-between gap-4 rounded-xl border border-transparent bg-white/5 p-4 transition-all hover:border-yellow-500/50 hover:bg-yellow-900/20"
+                                            className="group flex w-full items-center gap-4 rounded-xl border border-transparent bg-white/5 p-4 transition-all hover:border-yellow-500/50 hover:bg-yellow-900/20"
                                         >
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-500 animate-pulse">
+                                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                <div className="h-10 w-10 shrink-0 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-500 animate-pulse">
                                                     <PhoneIncoming className="w-5 h-5" />
                                                 </div>
-                                                <div className="text-left">
-                                                    <p className="font-medium text-yellow-50 group-hover:text-yellow-200 transition-colors">
+                                                <div className="text-left min-w-0">
+                                                    <p className="font-medium text-yellow-50 group-hover:text-yellow-200 transition-colors truncate">
                                                         {call.callerId}
                                                     </p>
                                                     <p className="text-xs text-white/40 group-hover:text-yellow-200/60">
@@ -178,7 +178,7 @@ export function Dashboard({ user }: DashboardProps) {
                                             </div>
                                             <button
                                                 onClick={() => acceptCall(call.callId, call.offer)}
-                                                className="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all text-sm font-medium border border-emerald-500/20 hover:border-emerald-500"
+                                                className="px-4 py-2 rounded-lg bg-gradient-to-b from-yellow-300 via-yellow-100 to-yellow-500 text-black hover:scale-105 hover:shadow-[0_0_15px_rgba(234,179,8,0.5)] transition-all text-sm font-bold uppercase tracking-wide"
                                             >
                                                 Accept
                                             </button>
