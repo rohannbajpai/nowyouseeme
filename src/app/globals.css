@@ -70,3 +70,69 @@ body {
   animation: float 8s ease-in-out infinite;
   animation-delay: 2s;
 }
+
+@keyframes float-around {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes combine {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.6;
+  }
+
+  100% {
+    transform: translate(var(--tx), var(--ty)) scale(0.1);
+    opacity: 0;
+  }
+}
+
+.animate-float-around {
+  animation: float-around 20s ease-in-out infinite;
+}
+
+@keyframes curtain-open-left {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes curtain-open-right {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-curtain-open-left {
+  animation: curtain-open-left 1.5s ease-in-out forwards;
+}
+
+.animate-curtain-open-right {
+  animation: curtain-open-right 1.5s ease-in-out forwards;
+}
+
+.paused {
+  animation-play-state: paused;
+}

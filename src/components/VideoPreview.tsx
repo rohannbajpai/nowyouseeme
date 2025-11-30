@@ -1,12 +1,14 @@
 import { useEffect, useRef } from "react"
-import { X, Monitor } from "lucide-react"
+import { X, Monitor, Maximize, Minimize } from "lucide-react"
 
 interface VideoPreviewProps {
     stream: MediaStream | null
     onStop: () => void
+    isFullScreen: boolean
+    onToggleFullScreen: () => void
 }
 
-export function VideoPreview({ stream, onStop }: VideoPreviewProps) {
+export function VideoPreview({ stream, onStop, isFullScreen, onToggleFullScreen }: VideoPreviewProps) {
     const videoRef = useRef<HTMLVideoElement>(null)
 
     useEffect(() => {
@@ -18,7 +20,7 @@ export function VideoPreview({ stream, onStop }: VideoPreviewProps) {
     if (!stream) return null
 
     return (
-        <div className="glass group relative overflow-hidden rounded-3xl shadow-[0_30px_60px_-12px_rgba(0,0,0,0.8)] transition-all duration-500 hover:scale-[1.01]">
+        <div className={`glass group relative overflow-hidden rounded-3xl shadow-[0_30px_60px_-12px_rgba(0,0,0,0.8)] transition-all duration-500 ${isFullScreen ? 'h-full w-full !rounded-none' : 'hover:scale-[1.01]'}`}>
             <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent pointer-events-none z-10" />
 
             <video
@@ -35,12 +37,20 @@ export function VideoPreview({ stream, onStop }: VideoPreviewProps) {
                     <span className="text-sm font-medium text-white">Live Preview</span>
                 </div>
 
-                <button
-                    onClick={onStop}
-                    className="rounded-full bg-red-500/20 p-3 text-red-400 backdrop-blur-xl border border-red-500/20 transition-all hover:bg-red-500 hover:text-white hover:scale-110 active:scale-95"
-                >
-                    <X className="h-5 w-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={onToggleFullScreen}
+                        className="rounded-full bg-white/10 p-3 text-white backdrop-blur-xl border border-white/10 transition-all hover:bg-white/20 hover:scale-110 active:scale-95"
+                    >
+                        {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+                    </button>
+                    <button
+                        onClick={onStop}
+                        className="rounded-full bg-red-500/20 p-3 text-red-400 backdrop-blur-xl border border-red-500/20 transition-all hover:bg-red-500 hover:text-white hover:scale-110 active:scale-95"
+                    >
+                        <X className="h-5 w-5" />
+                    </button>
+                </div>
             </div>
 
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
