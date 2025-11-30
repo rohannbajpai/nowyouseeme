@@ -1,18 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { FriendsList } from "./FriendsList"
 import { VideoPreview } from "./VideoPreview"
 import { useWebRTC } from "@/hooks/useWebRTC"
 import { User } from "next-auth"
 import { Copy, Phone, PhoneIncoming } from "lucide-react"
-
-const MOCK_FRIENDS = [
-    { id: "1", name: "Alice Johnson", status: "online" as const, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alice" },
-    { id: "2", name: "Bob Smith", status: "online" as const, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Bob" },
-    { id: "3", name: "Charlie Brown", status: "online" as const, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Charlie" },
-    { id: "4", name: "Diana Prince", status: "online" as const, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Diana" },
-]
 
 interface DashboardProps {
     user: User
@@ -24,14 +16,12 @@ export function Dashboard({ user }: DashboardProps) {
         setLocalStream,
         remoteStream,
         callStatus,
-        incomingCallData,
+        incomingCalls,
         startCall,
         acceptCall,
         endCall
     } = useWebRTC(user.id!)
 
-    const [selectedFriend, setSelectedFriend] = useState<string | null>(null)
-    const [isHovering, setIsHovering] = useState(false)
     const [isTransitioning, setIsTransitioning] = useState(false)
     const [isFullScreen, setIsFullScreen] = useState(false)
     const [friendIdInput, setFriendIdInput] = useState("")
@@ -63,7 +53,6 @@ export function Dashboard({ user }: DashboardProps) {
     const handleStopCall = () => {
         endCall()
         setIsFullScreen(false)
-        setSelectedFriend(null)
     }
 
     const copyUserId = () => {
@@ -119,32 +108,6 @@ export function Dashboard({ user }: DashboardProps) {
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center gap-8">
-                        {/* Incoming Call Modal */}
-                        {callStatus === 'incoming' && incomingCallData && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-                                <div className="bg-zinc-900 p-8 rounded-2xl border border-amber-500/20 shadow-[0_0_50px_rgba(245,158,11,0.2)] text-center max-w-md w-full mx-4">
-                                    <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-                                        <PhoneIncoming className="w-10 h-10 text-amber-500" />
-                                    </div>
-                                    <h3 className="text-2xl font-bold text-white mb-2">Incoming Call</h3>
-                                    <p className="text-white/60 mb-8">Someone is inviting you to watch their screen.</p>
-                                    <div className="flex gap-4 justify-center">
-                                        <button
-                                            onClick={() => endCall()} // Reject
-                                            className="px-6 py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all font-medium"
-                                        >
-                                            Decline
-                                        </button>
-                                        <button
-                                            onClick={acceptCall}
-                                            className="px-6 py-3 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-all font-medium shadow-lg shadow-emerald-500/20"
-                                        >
-                                            Accept & Watch
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
 
                         {/* Call Input */}
                         <div className="w-full max-w-md bg-white/5 p-6 rounded-2xl backdrop-blur-sm border border-white/10">
@@ -168,11 +131,60 @@ export function Dashboard({ user }: DashboardProps) {
                             </div>
                         </div>
 
-                        <div className="relative group w-full max-w-md opacity-50 pointer-events-none grayscale">
-                            <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-amber-500/10 to-red-500/10 blur opacity-10 group-hover:opacity-30 transition duration-1000"></div>
-                            <FriendsList friends={MOCK_FRIENDS} onFriendClick={() => { }} onHover={setIsHovering} />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="bg-black/80 px-4 py-2 rounded-full text-sm text-white/60 backdrop-blur">Mock Friends (Disabled)</span>
+                        {/* Incoming Calls List */}
+                        <div className="relative w-full max-w-md overflow-hidden rounded-3xl border-2 border-amber-600/50 bg-black/80 p-8 shadow-[0_0_50px_-12px_rgba(217,119,6,0.5)] backdrop-blur-xl transition-all duration-500 hover:border-amber-500 hover:shadow-[0_0_70px_-12px_rgba(217,119,6,0.7)]">
+                            {/* Marquee Lights Effect (Top/Bottom) */}
+                            <div className="absolute top-2 left-4 right-4 flex justify-between opacity-50">
+                                {[...Array(5)].map((_, i) => (
+                                    <div key={`t-${i}`} className="h-1.5 w-1.5 rounded-full bg-amber-200 shadow-[0_0_10px_rgba(251,191,36,0.8)] animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
+                                ))}
+                            </div>
+                            <div className="absolute bottom-2 left-4 right-4 flex justify-between opacity-50">
+                                {[...Array(5)].map((_, i) => (
+                                    <div key={`b-${i}`} className="h-1.5 w-1.5 rounded-full bg-amber-200 shadow-[0_0_10px_rgba(251,191,36,0.8)] animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
+                                ))}
+                            </div>
+
+                            <div className="mb-8 flex items-center justify-between border-b border-white/10 pb-4">
+                                <h2 className="font-serif text-2xl font-bold tracking-wide text-amber-100 drop-shadow-md">INCOMING CALLS</h2>
+                                <span className="rounded-full bg-amber-900/30 px-3 py-1 text-xs font-medium text-amber-400 border border-amber-500/30">
+                                    {incomingCalls.length} WAITING
+                                </span>
+                            </div>
+
+                            <div className="space-y-3">
+                                {incomingCalls.length === 0 ? (
+                                    <div className="text-center py-8 text-white/30 italic">
+                                        No incoming calls...
+                                    </div>
+                                ) : (
+                                    incomingCalls.map((call) => (
+                                        <div
+                                            key={call.callId}
+                                            className="group flex w-full items-center justify-between gap-4 rounded-xl border border-transparent bg-white/5 p-4 transition-all hover:border-amber-500/50 hover:bg-amber-900/20"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-10 w-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500 animate-pulse">
+                                                    <PhoneIncoming className="w-5 h-5" />
+                                                </div>
+                                                <div className="text-left">
+                                                    <p className="font-medium text-amber-50 group-hover:text-amber-200 transition-colors">
+                                                        {call.callerId}
+                                                    </p>
+                                                    <p className="text-xs text-white/40 group-hover:text-amber-200/60">
+                                                        Wants to share screen
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => acceptCall(call.callId, call.offer)}
+                                                className="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all text-sm font-medium border border-emerald-500/20 hover:border-emerald-500"
+                                            >
+                                                Accept
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </div>
                     </div>

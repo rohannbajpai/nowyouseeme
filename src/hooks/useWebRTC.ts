@@ -9,11 +9,17 @@ const ICE_SERVERS = {
     ],
 };
 
+export interface IncomingCall {
+    callId: string;
+    callerId: string;
+    offer: any;
+}
+
 export function useWebRTC(userId: string) {
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
     const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
     const [callStatus, setCallStatus] = useState<'idle' | 'calling' | 'incoming' | 'connected'>('idle');
-    const [incomingCallData, setIncomingCallData] = useState<any | null>(null);
+    const [incomingCalls, setIncomingCalls] = useState<IncomingCall[]>([]);
     const [currentCallId, setCurrentCallId] = useState<string | null>(null);
 
     const peerConnection = useRef<RTCPeerConnection | null>(null);
@@ -36,17 +42,18 @@ export function useWebRTC(userId: string) {
         if (!userId) return;
 
         const checkIncomingCalls = async () => {
-            if (callStatus !== 'idle') return;
-
+            // We always poll to show the list, even if busy (though UI might block accepting)
             try {
                 const res = await fetch('/api/calls/incoming');
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.calls && data.calls.length > 0) {
-                        const call = data.calls[0];
-                        setIncomingCallData(call);
+                    setIncomingCalls(data.calls || []);
+
+                    // If we are idle and have calls, we can set status to incoming (optional, mostly for UI triggers)
+                    if (callStatus === 'idle' && data.calls && data.calls.length > 0) {
                         setCallStatus('incoming');
-                        setCurrentCallId(call.callId);
+                    } else if (callStatus === 'incoming' && (!data.calls || data.calls.length === 0)) {
+                        setCallStatus('idle');
                     }
                 }
             } catch (error) {
@@ -58,13 +65,13 @@ export function useWebRTC(userId: string) {
         return () => clearInterval(interval);
     }, [userId, callStatus]);
 
-    const createPeerConnection = () => {
+    const createPeerConnection = (callId: string, isCaller: boolean) => {
         const pc = new RTCPeerConnection(ICE_SERVERS);
 
         pc.onicecandidate = (event) => {
-            if (event.candidate && currentCallId) {
-                const collectionName = incomingCallData ? 'answerCandidates' : 'offerCandidates';
-                const candidatesCol = collection(db, 'calls', currentCallId, collectionName);
+            if (event.candidate && callId) {
+                const collectionName = isCaller ? 'offerCandidates' : 'answerCandidates';
+                const candidatesCol = collection(db, 'calls', callId, collectionName);
                 addDoc(candidatesCol, event.candidate.toJSON());
             }
         };
@@ -97,16 +104,23 @@ export function useWebRTC(userId: string) {
         }
 
         setCallStatus('calling');
-        const pc = createPeerConnection();
 
         // Create Offer
+        const pc = new RTCPeerConnection(ICE_SERVERS); // Temp PC to create offer
+        // We need to add tracks to generate offer with video/audio
+        if (localStream) {
+            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+        }
+
         const offerDescription = await pc.createOffer();
-        await pc.setLocalDescription(offerDescription);
+        await pc.setLocalDescription(offerDescription); // Set on temp PC
 
         const offer = {
             sdp: offerDescription.sdp,
             type: offerDescription.type,
         };
+
+        pc.close(); // Close temp PC, we will recreate properly with ID
 
         // Create Call via API
         try {
@@ -122,13 +136,17 @@ export function useWebRTC(userId: string) {
             const callId = data.callId;
             setCurrentCallId(callId);
 
+            // Re-create PC with callId for candidates
+            const realPC = createPeerConnection(callId, true);
+            await realPC.setLocalDescription(offerDescription);
+
             // Listen for Answer
             const callDoc = doc(db, 'calls', callId);
             onSnapshot(callDoc, (snapshot) => {
                 const data = snapshot.data();
-                if (!pc.currentRemoteDescription && data?.answer) {
+                if (!realPC.currentRemoteDescription && data?.answer) {
                     const answerDescription = new RTCSessionDescription(data.answer);
-                    pc.setRemoteDescription(answerDescription);
+                    realPC.setRemoteDescription(answerDescription);
                     setCallStatus('connected');
                 }
             });
@@ -139,7 +157,7 @@ export function useWebRTC(userId: string) {
                 snapshot.docChanges().forEach((change) => {
                     if (change.type === 'added') {
                         const candidate = new RTCIceCandidate(change.doc.data());
-                        pc.addIceCandidate(candidate);
+                        realPC.addIceCandidate(candidate);
                     }
                 });
             });
@@ -150,14 +168,14 @@ export function useWebRTC(userId: string) {
         }
     };
 
-    const acceptCall = async () => {
-        if (!currentCallId || !incomingCallData) return;
-
+    const acceptCall = async (callId: string, offer: any) => {
+        setCurrentCallId(callId);
         setCallStatus('connected'); // Optimistic
-        const pc = createPeerConnection();
+
+        const pc = createPeerConnection(callId, false);
 
         // Set Remote Description (Offer)
-        const offerDescription = new RTCSessionDescription(incomingCallData.offer);
+        const offerDescription = new RTCSessionDescription(offer);
         await pc.setRemoteDescription(offerDescription);
 
         // Create Answer
@@ -170,14 +188,14 @@ export function useWebRTC(userId: string) {
         };
 
         // Send Answer via API
-        await fetch(`/api/signaling/${currentCallId}/answer`, {
+        await fetch(`/api/signaling/${callId}/answer`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ answer }),
         });
 
         // Listen for Offer Candidates
-        const offerCandidates = collection(db, 'calls', currentCallId, 'offerCandidates');
+        const offerCandidates = collection(db, 'calls', callId, 'offerCandidates');
         onSnapshot(offerCandidates, (snapshot) => {
             snapshot.docChanges().forEach((change) => {
                 if (change.type === 'added') {
@@ -207,7 +225,7 @@ export function useWebRTC(userId: string) {
         }
         setRemoteStream(null);
         setCallStatus('idle');
-        setIncomingCallData(null);
+        setIncomingCalls([]);
         setCurrentCallId(null);
     };
 
@@ -216,7 +234,7 @@ export function useWebRTC(userId: string) {
         setLocalStream,
         remoteStream,
         callStatus,
-        incomingCallData,
+        incomingCalls,
         startCall,
         acceptCall,
         endCall,

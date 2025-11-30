@@ -1,7 +1,19 @@
 import * as admin from 'firebase-admin';
 
 function formatPrivateKey(key: string) {
-    return key.replace(/\\n/g, '\n');
+    // Remove wrapping quotes if present
+    let formattedKey = key.replace(/^['"]|['"]$/g, '');
+
+    // Replace literal \n with actual newlines
+    formattedKey = formattedKey.replace(/\\n/g, '\n');
+
+    // Ensure it looks like a PEM key
+    if (!formattedKey.startsWith('-----BEGIN PRIVATE KEY-----')) {
+        // Try to fix if it's just the body
+        // But usually, it's just the newlines issue.
+    }
+
+    return formattedKey;
 }
 
 export function createFirebaseAdminApp(params: {

@@ -15,7 +15,6 @@ async function handleGet(
             .where('status', '==', 'pending')
             .where('receiverId', '==', userId)
             .orderBy('createdAt', 'desc')
-            .limit(1)
             .get();
 
         if (callSnapshot.empty) {
