@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { db, auth } from '@/lib/firebase';
-import { doc, onSnapshot, collection, addDoc, setDoc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, collection, addDoc, setDoc, updateDoc, deleteDoc, getDoc, query, where } from 'firebase/firestore';
 
 const ICE_SERVERS = {
     iceServers: [
@@ -37,33 +37,39 @@ export function useWebRTC(userId: string) {
         };
     }, []);
 
-    // Poll for incoming calls
+    // Listen for incoming calls
     useEffect(() => {
         if (!userId) return;
 
-        const checkIncomingCalls = async () => {
-            // We always poll to show the list, even if busy (though UI might block accepting)
-            try {
-                const res = await fetch('/api/calls/incoming');
-                if (res.ok) {
-                    const data = await res.json();
-                    console.log(data);
-                    setIncomingCalls(data.calls || []);
+        const q = query(
+            collection(db, 'calls'),
+            where('receiverId', '==', userId),
+            where('status', '==', 'pending')
+        );
 
-                    // If we are idle and have calls, we can set status to incoming (optional, mostly for UI triggers)
-                    if (callStatus === 'idle' && data.calls && data.calls.length > 0) {
-                        setCallStatus('incoming');
-                    } else if (callStatus === 'incoming' && (!data.calls || data.calls.length === 0)) {
-                        setCallStatus('idle');
-                    }
-                }
-            } catch (error) {
-                console.error("Error checking incoming calls:", error);
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const calls = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    callId: doc.id,
+                    callerId: data.callerId,
+                    offer: data.offer,
+                } as IncomingCall;
+            });
+
+            console.log(`[WebRTC] Incoming calls update: ${calls.length}`);
+            setIncomingCalls(calls);
+
+            if (callStatus === 'idle' && calls.length > 0) {
+                setCallStatus('incoming');
+            } else if (callStatus === 'incoming' && calls.length === 0) {
+                setCallStatus('idle');
             }
-        };
+        }, (error) => {
+            console.error("Error listening for incoming calls:", error);
+        });
 
-        const interval = setInterval(checkIncomingCalls, 3000);
-        return () => clearInterval(interval);
+        return () => unsubscribe();
     }, [userId, callStatus]);
 
     const createPeerConnection = (callId: string, isCaller: boolean, stream?: MediaStream) => {
