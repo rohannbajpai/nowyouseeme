@@ -1,7 +1,32 @@
+"use client"
 
-import { signIn } from "@/auth"
+import { signIn } from "next-auth/react"
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth"
+import { app } from "@/lib/firebase"
+import { useState } from "react"
 
 export default function LoginPage() {
+    const [isLoading, setIsLoading] = useState(false)
+
+    const handleGoogleSignIn = async () => {
+        setIsLoading(true)
+        try {
+            const auth = getAuth(app)
+            const provider = new GoogleAuthProvider()
+            const result = await signInWithPopup(auth, provider)
+            const idToken = await result.user.getIdToken()
+
+            await signIn("credentials", {
+                idToken,
+                callbackUrl: "/"
+            })
+        } catch (error) {
+            console.error("Error signing in:", error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
     return (
         <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden text-white selection:bg-white/20">
             {/* Abstract Background Shapes */}
@@ -18,20 +43,16 @@ export default function LoginPage() {
                     </p>
                 </div>
 
-                <form
-                    action={async () => {
-                        "use server"
-                        await signIn("github", { redirectTo: "/" })
-                    }}
+                <button
+                    onClick={handleGoogleSignIn}
+                    disabled={isLoading}
+                    className="group relative inline-flex h-14 w-full items-center justify-center overflow-hidden rounded-2xl bg-white text-black transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <button
-                        type="submit"
-                        className="group relative inline-flex h-14 w-full items-center justify-center overflow-hidden rounded-2xl bg-white text-black transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-black"
-                    >
-                        <span className="relative z-10 text-lg font-medium">Sign in with GitHub</span>
-                        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                    </button>
-                </form>
+                    <span className="relative z-10 text-lg font-medium">
+                        {isLoading ? "Signing in..." : "Sign in with Google"}
+                    </span>
+                    <div className="absolute inset-0 -z-10 bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                </button>
             </div>
         </div>
     )
