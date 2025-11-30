@@ -28,6 +28,13 @@ export function Dashboard({ user }: DashboardProps) {
 
     const activeStream = localStream || remoteStream
 
+    useEffect(() => {
+        console.log(`[Dashboard] Stream update - Local: ${!!localStream}, Remote: ${!!remoteStream}, Active: ${!!activeStream}`);
+        if (remoteStream) {
+            console.log(`[Dashboard] Remote Stream ID: ${remoteStream.id}, Active: ${remoteStream.active}`);
+        }
+    }, [localStream, remoteStream, activeStream]);
+
     const handleStartCall = async (receiverId: string) => {
         setIsTransitioning(true)
         try {
@@ -103,6 +110,7 @@ export function Dashboard({ user }: DashboardProps) {
                                 onStop={handleStopCall}
                                 isFullScreen={isFullScreen}
                                 onToggleFullScreen={() => setIsFullScreen(!isFullScreen)}
+                                isLocal={!!localStream}
                             />
                         </div>
                     </div>

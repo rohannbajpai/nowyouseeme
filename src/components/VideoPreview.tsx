@@ -6,14 +6,33 @@ interface VideoPreviewProps {
     onStop: () => void
     isFullScreen: boolean
     onToggleFullScreen: () => void
+    isLocal?: boolean
 }
 
-export function VideoPreview({ stream, onStop, isFullScreen, onToggleFullScreen }: VideoPreviewProps) {
+export function VideoPreview({ stream, onStop, isFullScreen, onToggleFullScreen, isLocal = true }: VideoPreviewProps) {
     const videoRef = useRef<HTMLVideoElement>(null)
 
     useEffect(() => {
-        if (videoRef.current && stream) {
-            videoRef.current.srcObject = stream
+        const video = videoRef.current;
+        if (video && stream) {
+            // Only update if the stream is different
+            if (video.srcObject !== stream) {
+                console.log(`[VideoPreview] Setting new srcObject. Stream ID: ${stream.id}, Tracks: ${stream.getTracks().length}`);
+                video.srcObject = stream;
+
+                // Add event listeners for debugging
+                video.onloadedmetadata = () => console.log(`[VideoPreview] onloadedmetadata: ${video.videoWidth}x${video.videoHeight}`);
+                video.onresize = () => console.log(`[VideoPreview] onresize: ${video.videoWidth}x${video.videoHeight}`);
+                video.onplaying = () => console.log(`[VideoPreview] onplaying`);
+                video.onwaiting = () => console.log(`[VideoPreview] onwaiting`);
+                video.onerror = (e) => console.error(`[VideoPreview] onerror`, e);
+
+                video.play().catch(e => {
+                    if (e.name !== 'AbortError') {
+                        console.error("[VideoPreview] Error playing video:", e);
+                    }
+                });
+            }
         }
     }, [stream])
 
@@ -27,7 +46,7 @@ export function VideoPreview({ stream, onStop, isFullScreen, onToggleFullScreen 
                 ref={videoRef}
                 autoPlay
                 playsInline
-                muted
+                muted={isLocal}
                 className="h-full w-full object-contain rounded-2xl"
             />
 
@@ -55,7 +74,7 @@ export function VideoPreview({ stream, onStop, isFullScreen, onToggleFullScreen 
 
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
                 <div className="rounded-full bg-black/60 px-6 py-2 backdrop-blur-xl border border-white/10 text-sm font-medium text-white/80 shadow-lg">
-                    Sharing your screen
+                    {isLocal ? "Sharing your screen" : "Viewing shared screen"}
                 </div>
             </div>
         </div>
