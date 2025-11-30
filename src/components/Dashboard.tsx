@@ -42,7 +42,7 @@ export function Dashboard({ user }: DashboardProps) {
                 handleStopCall()
             }
 
-            await startCall(receiverId)
+            await startCall(receiverId, mediaStream)
             setIsTransitioning(false)
         } catch (err) {
             console.error("Error sharing screen:", err)

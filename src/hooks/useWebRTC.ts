@@ -47,6 +47,7 @@ export function useWebRTC(userId: string) {
                 const res = await fetch('/api/calls/incoming');
                 if (res.ok) {
                     const data = await res.json();
+                    console.log(data);
                     setIncomingCalls(data.calls || []);
 
                     // If we are idle and have calls, we can set status to incoming (optional, mostly for UI triggers)
@@ -97,8 +98,9 @@ export function useWebRTC(userId: string) {
         return pc;
     };
 
-    const startCall = async (receiverId: string) => {
-        if (!localStream) {
+    const startCall = async (receiverId: string, stream?: MediaStream) => {
+        const streamToUse = stream || localStream;
+        if (!streamToUse) {
             console.error("No local stream to share");
             return;
         }
@@ -108,8 +110,8 @@ export function useWebRTC(userId: string) {
         // Create Offer
         const pc = new RTCPeerConnection(ICE_SERVERS); // Temp PC to create offer
         // We need to add tracks to generate offer with video/audio
-        if (localStream) {
-            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+        if (streamToUse) {
+            streamToUse.getTracks().forEach(track => pc.addTrack(track, streamToUse));
         }
 
         const offerDescription = await pc.createOffer();
