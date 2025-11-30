@@ -1,12 +1,12 @@
-```
+
 import { signIn } from "@/auth"
 
 export default function LoginPage() {
     return (
         <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden text-white selection:bg-white/20">
             {/* Abstract Background Shapes */}
-      <div className="animate-pulse-glow absolute -top-20 -left-20 h-96 w-96 rounded-full bg-red-600/30 blur-[128px]" />
-      <div className="animate-pulse-glow absolute -bottom-20 -right-20 h-96 w-96 rounded-full bg-red-600/30 blur-[128px]" style={{ animationDelay: '2s' }} />
+            <div className="animate-pulse-glow absolute -top-20 -left-20 h-96 w-96 rounded-full bg-red-600/30 blur-[128px]" />
+            <div className="animate-pulse-glow absolute -bottom-20 -right-20 h-96 w-96 rounded-full bg-red-600/30 blur-[128px]" style={{ animationDelay: '2s' }} />
 
             <div className="glass relative z-10 w-full max-w-md space-y-8 rounded-3xl p-10 text-center">
                 <div className="space-y-4">

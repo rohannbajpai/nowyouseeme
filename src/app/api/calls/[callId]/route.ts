@@ -6,35 +6,43 @@ import { authWrapper } from "@/lib/auth-wrapper";
 type Context = { params: { [key: string]: string | string[] } };
 
 async function handleDelete(
-    _req: NextRequest,
+    req: NextRequest,
     context: Context,
     userId: string
 ) {
+    const { callId: rawCallId } = context.params;
+    const callId = Array.isArray(rawCallId) ? rawCallId[0] : rawCallId;
+
+    if (!callId) {
+        return NextResponse.json({ error: 'Invalid call ID' }, { status: 400 });
+    }
+
+    const callRef = db.collection('calls').doc(callId);
+
     try {
-        const { callId } = context.params;
-        if (!callId || Array.isArray(callId)) {
-            return NextResponse.json({ error: 'Invalid call ID' }, { status: 400 });
-        }
-        const callRef = db.collection('calls').doc(callId);
-        const callSnapshot = await callRef.get();
+        await db.runTransaction(async (t) => {
+            const doc = await t.get(callRef);
+            if (!doc.exists) return; // Already deleted, ignore
 
-        if (!callSnapshot.exists) {
-            return NextResponse.json({ error: 'Call not found' }, { status: 404 });
-        }
+            const data = doc.data();
 
-        const callData = callSnapshot.data();
-        if (!callData) {
-            return NextResponse.json({ error: 'Call not found' }, { status: 404 });
-        }
-        if (callData.callerId !== userId || callData.receiverId !== userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+            // Security: Only the participants can end the call
+            if (data?.callerId !== userId && data?.receiverId !== userId) {
+                throw new Error("Unauthorized");
+            }
 
-        await callRef.delete();
-        return NextResponse.json({ message: 'Call deleted successfully' }, { status: 200 });
-    } catch (error) {
+            // Delete the main call document
+            t.delete(callRef);
+        });
+
+        return NextResponse.json({ success: true });
+
+    } catch (error: any) {
+        if (error.message === "Unauthorized") {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        }
         console.error('Error deleting call:', error);
-        return NextResponse.json({ error: 'Failed to delete call' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to end call' }, { status: 500 });
     }
 }
 
