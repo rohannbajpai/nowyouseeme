@@ -77,12 +77,12 @@ export function Dashboard({ user }: DashboardProps) {
 
             {!activeStream && (
                 <header className={`relative z-30 text-center transition-all duration-700 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'} mt-32 mb-16`}>
-                    <h1 className="text-glow font-serif text-7xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-amber-300 via-yellow-200 to-amber-500 sm:text-9xl drop-shadow-[0_0_15px_rgba(255,215,0,0.3)]">
+                    <h1 className="text-glow font-serif text-7xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 via-yellow-100 to-yellow-500 sm:text-9xl drop-shadow-[0_0_15px_rgba(234,179,8,0.3)]">
                         ShareTime
                     </h1>
                     <div className="mt-4 flex items-center justify-center gap-2">
                         <span className="text-white/60">Your ID:</span>
-                        <code className="bg-white/10 px-2 py-1 rounded text-amber-200">{user.id}</code>
+                        <code className="bg-white/10 px-2 py-1 rounded text-yellow-200">{user.id}</code>
                         <button onClick={copyUserId} className="p-1 hover:bg-white/10 rounded transition-colors">
                             <Copy className="w-4 h-4 text-white/60" />
                         </button>
@@ -118,12 +118,12 @@ export function Dashboard({ user }: DashboardProps) {
                                     placeholder="Enter Friend's User ID"
                                     value={friendIdInput}
                                     onChange={(e) => setFriendIdInput(e.target.value)}
-                                    className="flex-1 bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50"
+                                    className="flex-1 bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-500/50"
                                 />
                                 <button
                                     onClick={() => handleStartCall(friendIdInput)}
                                     disabled={!friendIdInput}
-                                    className="bg-amber-500 text-black px-4 py-2 rounded-xl font-medium hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                                    className="group relative px-6 py-3 rounded-xl bg-gradient-to-b from-yellow-300 via-yellow-100 to-yellow-500 text-black font-bold tracking-wide uppercase transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(234,179,8,0.5)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                 >
                                     <Phone className="w-4 h-4" />
                                     Call
@@ -132,22 +132,22 @@ export function Dashboard({ user }: DashboardProps) {
                         </div>
 
                         {/* Incoming Calls List */}
-                        <div className="relative w-full max-w-md overflow-hidden rounded-3xl border-2 border-amber-600/50 bg-black/80 p-8 shadow-[0_0_50px_-12px_rgba(217,119,6,0.5)] backdrop-blur-xl transition-all duration-500 hover:border-amber-500 hover:shadow-[0_0_70px_-12px_rgba(217,119,6,0.7)]">
+                        <div className="relative w-full max-w-md overflow-hidden rounded-3xl border-2 border-yellow-500/50 bg-black/80 p-8 shadow-[0_0_50px_-12px_rgba(234,179,8,0.5)] backdrop-blur-xl transition-all duration-500 hover:border-yellow-400 hover:shadow-[0_0_70px_-12px_rgba(234,179,8,0.7)]">
                             {/* Marquee Lights Effect (Top/Bottom) */}
                             <div className="absolute top-2 left-4 right-4 flex justify-between opacity-50">
                                 {[...Array(5)].map((_, i) => (
-                                    <div key={`t-${i}`} className="h-1.5 w-1.5 rounded-full bg-amber-200 shadow-[0_0_10px_rgba(251,191,36,0.8)] animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
+                                    <div key={`t-${i}`} className="h-1.5 w-1.5 rounded-full bg-yellow-200 shadow-[0_0_10px_rgba(253,224,71,0.8)] animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
                                 ))}
                             </div>
                             <div className="absolute bottom-2 left-4 right-4 flex justify-between opacity-50">
                                 {[...Array(5)].map((_, i) => (
-                                    <div key={`b-${i}`} className="h-1.5 w-1.5 rounded-full bg-amber-200 shadow-[0_0_10px_rgba(251,191,36,0.8)] animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
+                                    <div key={`b-${i}`} className="h-1.5 w-1.5 rounded-full bg-yellow-200 shadow-[0_0_10px_rgba(253,224,71,0.8)] animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
                                 ))}
                             </div>
 
                             <div className="mb-8 flex items-center justify-between border-b border-white/10 pb-4">
-                                <h2 className="font-serif text-2xl font-bold tracking-wide text-amber-100 drop-shadow-md">INCOMING CALLS</h2>
-                                <span className="rounded-full bg-amber-900/30 px-3 py-1 text-xs font-medium text-amber-400 border border-amber-500/30">
+                                <h2 className="font-serif text-2xl font-bold tracking-wide text-yellow-100 drop-shadow-md">INCOMING CALLS</h2>
+                                <span className="rounded-full bg-yellow-900/30 px-3 py-1 text-xs font-medium text-yellow-400 border border-yellow-500/30">
                                     {incomingCalls.length} WAITING
                                 </span>
                             </div>
@@ -161,17 +161,17 @@ export function Dashboard({ user }: DashboardProps) {
                                     incomingCalls.map((call) => (
                                         <div
                                             key={call.callId}
-                                            className="group flex w-full items-center justify-between gap-4 rounded-xl border border-transparent bg-white/5 p-4 transition-all hover:border-amber-500/50 hover:bg-amber-900/20"
+                                            className="group flex w-full items-center justify-between gap-4 rounded-xl border border-transparent bg-white/5 p-4 transition-all hover:border-yellow-500/50 hover:bg-yellow-900/20"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500 animate-pulse">
+                                                <div className="h-10 w-10 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-500 animate-pulse">
                                                     <PhoneIncoming className="w-5 h-5" />
                                                 </div>
                                                 <div className="text-left">
-                                                    <p className="font-medium text-amber-50 group-hover:text-amber-200 transition-colors">
+                                                    <p className="font-medium text-yellow-50 group-hover:text-yellow-200 transition-colors">
                                                         {call.callerId}
                                                     </p>
-                                                    <p className="text-xs text-white/40 group-hover:text-amber-200/60">
+                                                    <p className="text-xs text-white/40 group-hover:text-yellow-200/60">
                                                         Wants to share screen
                                                     </p>
                                                 </div>
